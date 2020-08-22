@@ -19,7 +19,9 @@ define( 'SFNG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SFNG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SFNG_PLUGIN_FILE', __FILE__ );
 define( 'SFNG_PLUGIN_NAME', 'NASA Gallery' );
+define( 'SFNG_PLUGIN_SLUG', 'nasa-gallery' );
 define( 'SFNG_VERSION', '1.0.0' );
+define( 'SFNG_DEBUG', 1 );
 
 require_once SFNG_PLUGIN_DIR . '/classes/Options.php';
 require_once SFNG_PLUGIN_DIR . '/classes/NasaGallery.php';

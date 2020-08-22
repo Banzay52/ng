@@ -6,20 +6,23 @@ class NasaGallery {
 		add_action( 'init', array(__CLASS__, 'registerPostType'), 20 );
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 		add_shortcode('nasa-gallery', array(__CLASS__, 'shortcode'));
+
 		if( ! wp_next_scheduled( 'get_remote_item_hook' ) ) {  
 			wp_schedule_event( time(), 'daily', 'get_remote_item_hook');  
 		}
+
 		add_action( 'get_remote_item_hook', array(__CLASS__, 'checkPosts'));
     }
 
 	public static function checkPosts(){
 		$posts = get_posts(array('post_type' => SFNG_POST_TYPE, 'numberposts' => 5));
-		$qty = ( count($posts) === 0 ) ? 5 : 0;
+		$qty = ( count($posts) === 0 ) ? 5 : 1;
 		$items = self::getRemoteItems($qty);
 		foreach ( $items as $item ) {
 			self::insertPost($item);
 		}
 	}
+
 	public static function insertPost($item){
 		$post_data = array(
 			'post_title'    => $item->date,
@@ -28,17 +31,19 @@ class NasaGallery {
 			'post_type'     => SFNG_POST_TYPE
 		);
 		
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
+		if ( get_page_by_title($post_data['post_title'], OBJECT, SFNG_POST_TYPE ) === null ) {
+			require_once ABSPATH . 'wp-admin/includes/media.php';
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/image.php';
 
-		$post_id = wp_insert_post($post_data, true);
-		if( is_wp_error($post_id) ){
-			echo $post_id->get_error_message();
-			die();
+			$post_id = wp_insert_post($post_data, true);
+			if( is_wp_error($post_id) ){
+				echo $post_id->get_error_message();
+				die();
+			}
+			$attach_id = media_sideload_image( $item->url, $post_id, null, 'id' );
+			set_post_thumbnail($post_id, $attach_id);
 		}
-		$attach_id = media_sideload_image( $item->url, $post_id, null, 'id' );
-        set_post_thumbnail($post_id, $attach_id);
 
 	}
     public static function registerPostType() {
@@ -60,7 +65,7 @@ class NasaGallery {
 				'public'             => true,
 				'publicly_queryable' => true,
 				'show_ui'            => true,
-				'show_in_menu'       => true,
+				'show_in_menu'       => SFNG_PLUGIN_SLUG,
 				'query_var'          => false,
 				'rewrite'            => true,
 				'capability_type'    => 'post',
@@ -82,8 +87,10 @@ class NasaGallery {
 		} elseif ( defined( 'SFNG_VERSION' ) )  {
 			return SFNG_VERSION;
 		}
+
 		return $wp_version;
 	}
+
     public static function shortcode($atts) {
 		$atts = shortcode_atts( array(
 					'items_number' => 5,
@@ -98,10 +105,12 @@ class NasaGallery {
 				'orderby'     => $atts['sort_order'],
 				'order'       => 'DESC',
 				));
+
 		include SFNG_PLUGIN_DIR . '/frontend/shortcode_view.php';
 		
 		return ob_get_clean();
 	}
+
 	public static function enqueueScripts() {
 		wp_enqueue_style('sfng-slick-style', SFNG_PLUGIN_URL . "assets/css/slick.css", array(), self::getVersion());
 		wp_enqueue_style('sfng-slick-theme', SFNG_PLUGIN_URL . "assets/css/slick-theme.css", array(), self::getVersion());
@@ -127,8 +136,7 @@ class NasaGallery {
 				'hd'      => false,
 			);
 		$i = 0;
-		$j = 0;
-		while( $i < $qty && $j < 20 ) {
+		while( $i < $qty ) {
 			$url = add_query_arg($atts, $remote_url);
 			$response = wp_remote_get($url);
 			$item = json_decode( $response['body'] );
@@ -138,7 +146,6 @@ class NasaGallery {
  			}
 			$date->modify( "-1 day" );
 			$atts['date'] = $date->format( $format );
-			$j++;
 		}
 		return $items;
 	}

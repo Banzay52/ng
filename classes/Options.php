@@ -6,7 +6,7 @@ use sf\ng\classes\NasaGallery;
 class Options {
 	const PLUGIN_OPTIONS = 'sfng_options';
 	const PLUGIN_OPTIONS_MENU_ID = 'sfng';
-	const SFNG_SLUG_OPTION_NAME = 'sfng_slug';
+	const SFNG_PLUGIN_SLUG = 'sfng_slug';
 	private static $sections = array(
 		'api_section' => array(
 			'id'    => 'sfng_api_section',
@@ -38,7 +38,9 @@ class Options {
 	}
 	
 	public static function regOptionsPage() {
-		add_options_page( 'NASA Gallery Plugin', 'NASA Gallery Plugin', 'edit_posts', self::SFNG_SLUG_OPTION_NAME, array(__CLASS__, 'optionsPage') );
+		add_menu_page( 'NASA Gallery Plugin', 'NASA Gallery Plugin', 'manage_options', SFNG_PLUGIN_SLUG );
+		add_submenu_page( SFNG_PLUGIN_SLUG, 'NASA Gallery Options', 'Options', 'manage_options', 'sfng_options_slug', array(__CLASS__, 'optionsPage') );
+		remove_submenu_page(SFNG_PLUGIN_SLUG, SFNG_PLUGIN_SLUG);
 	}
 
 	public static function optionsPage() {
@@ -46,8 +48,8 @@ class Options {
 			<h2>NASA Gallery options</h2>
 			<form method="post" enctype="multipart/form-data" action="options.php">
 				<?php 
-				settings_fields(self::SFNG_SLUG_OPTION_NAME);
-				do_settings_sections( self::SFNG_SLUG_OPTION_NAME );
+				settings_fields(SFNG_PLUGIN_SLUG);
+				do_settings_sections( SFNG_PLUGIN_SLUG );
 				?>
 				<p class="submit">  
 					<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />  
@@ -57,11 +59,11 @@ class Options {
 	}
 
 	public static function optionSettings() {
-		register_setting( self::SFNG_SLUG_OPTION_NAME, self::PLUGIN_OPTIONS, array(__CLASS__, 'parseValue') );
+		register_setting( SFNG_PLUGIN_SLUG, self::PLUGIN_OPTIONS, array(__CLASS__, 'parseValue') );
 		foreach ( static::$sections as $name => $atts ) {
 			add_settings_section( $atts['id'], $atts['title'], '', self::PLUGIN_OPTIONS_MENU_ID );
 		}
-			add_settings_section('sfng_api_section', 'API section', '', self::SFNG_SLUG_OPTION_NAME );
+			add_settings_section('sfng_api_section', 'API section', '', SFNG_PLUGIN_SLUG );
 		$option_value = array();
 		foreach ( static::$options as $name => $option_value ) {
 			$option_value['value'] = static::getOption($name);
@@ -70,7 +72,7 @@ class Options {
 			} else {
 				$option_value['section'] =  '';
 			}
-			add_settings_field( 'api_key_field', 'API key', array(__CLASS__, 'optionDisplaySettings'), self::SFNG_SLUG_OPTION_NAME, 'sfng_api_section', $option_value );
+			add_settings_field( 'api_key_field', 'API key', array(__CLASS__, 'optionDisplaySettings'), SFNG_PLUGIN_SLUG, 'sfng_api_section', $option_value );
 		}
 	}
 
@@ -88,6 +90,7 @@ class Options {
 	}
 
 	public static function parseValue($options) {
+		
 		return $options;
 	}
 
