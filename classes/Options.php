@@ -4,7 +4,6 @@ namespace sf\ng\classes;
 use sf\ng\classes\NasaGallery;
 
 class Options {
-	const PLUGIN_OPTIONS = 'sfng_options';
 	const PLUGIN_OPTIONS_MENU_ID = 'sfng';
 	const SFNG_PLUGIN_SLUG = 'sfng_slug';
 	private static $sections = array(
@@ -29,17 +28,23 @@ class Options {
 	public static function init() {
 		add_action( 'admin_menu', array(__CLASS__, 'regOptionsPage') );
 		add_action( 'admin_init', array(__CLASS__, 'optionSettings') );
+		add_action('updated_option', array(__CLASS__, 'checkUpdatedOptions'), 10, 3);
 	}
 
 	public static function getOption($name, $default = '') {
-		$options = get_option(self::PLUGIN_OPTIONS, $default);
+		$options = get_option(SFNG_PLUGIN_OPTIONS, $default);
 		$value = isset($options[$name]) ? $options[$name] : $default;
-		return $value ?? $default;
+		return $value ? $value : $default;
 	}
 	
 	public static function regOptionsPage() {
 		add_menu_page( 'NASA Gallery Plugin', 'NASA Gallery Plugin', 'manage_options', SFNG_PLUGIN_SLUG );
-		add_submenu_page( SFNG_PLUGIN_SLUG, 'NASA Gallery Options', 'Options', 'manage_options', 'sfng_options_slug', array(__CLASS__, 'optionsPage') );
+		add_submenu_page( SFNG_PLUGIN_SLUG,
+            'NASA Gallery Options',
+            'Options',
+            'manage_options',
+			SFNG_PLUGIN_OPTIONS,
+            array(__CLASS__, 'optionsPage') );
 		remove_submenu_page(SFNG_PLUGIN_SLUG, SFNG_PLUGIN_SLUG);
 	}
 
@@ -59,7 +64,7 @@ class Options {
 	}
 
 	public static function optionSettings() {
-		register_setting( SFNG_PLUGIN_SLUG, self::PLUGIN_OPTIONS, array(__CLASS__, 'parseValue') );
+		register_setting( SFNG_PLUGIN_SLUG, SFNG_PLUGIN_OPTIONS, array(__CLASS__, 'parseValue') );
 		foreach ( static::$sections as $name => $atts ) {
 			add_settings_section( $atts['id'], $atts['title'], '', self::PLUGIN_OPTIONS_MENU_ID );
 		}
@@ -72,7 +77,12 @@ class Options {
 			} else {
 				$option_value['section'] =  '';
 			}
-			add_settings_field( 'api_key_field', 'API key', array(__CLASS__, 'optionDisplaySettings'), SFNG_PLUGIN_SLUG, 'sfng_api_section', $option_value );
+			add_settings_field( 'api_key_field',
+                'API key',
+                array(__CLASS__, 'optionDisplaySettings'),
+                SFNG_PLUGIN_SLUG,
+                'sfng_api_section', $option_value );
+
 		}
 	}
 
@@ -80,7 +90,8 @@ class Options {
 		extract( $args );
 		switch ($type) {
 			case 'text':
-						echo "<input class='regular-text' type='text' id='$id' name='" . self::PLUGIN_OPTIONS . "[$id]' value='$value' />";  
+						echo "<input class='regular-text' type='text' id='$id' name='" .
+						     SFNG_PLUGIN_OPTIONS . "[$id]' value='$value' />";
 						echo ($desc != '') ? "<br /><span class='description'>$desc</span>" : ""; 
 						break;
 			default:
@@ -89,8 +100,16 @@ class Options {
 		}
 	}
 
+	public static function checkUpdatedOptions($opt_name, $old_value = '', $value = '') {
+	    If ( $opt_name === 'sfng_options' ) {
+			if ( NasaGallery::testApiKey( $old_value != $value) ) {
+				NasaGallery::checkPosts();
+			}
+		}
+    }
+
 	public static function parseValue($options) {
-		
+//		NasaGallery::testApiKey(true);
 		return $options;
 	}
 
