@@ -3,7 +3,7 @@
  Plugin Name: NASA Gallery Plugin
  Plugin URI: 
  Description: This plugin renders NASA image galleries
- Version: 1.0.0
+ Version: 1.1.0
  Author: Serhii Franchuk
  Author URI: 
  Licence: GPL

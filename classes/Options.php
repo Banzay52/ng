@@ -5,13 +5,14 @@ use sf\ng\classes\NasaGallery;
 
 class Options {
 	const PLUGIN_OPTIONS_MENU_ID = 'sfng';
-	const SFNG_PLUGIN_SLUG = 'sfng_slug';
+	
 	private static $sections = array(
 		'api_section' => array(
 			'id'    => 'sfng_api_section',
 			'title' => 'API section'
 		)
 	);
+	
 	public static $options = array(
 		'sfng_api_key' => array(
 			'type'      => 'text',
@@ -109,7 +110,9 @@ class Options {
     }
 
 	public static function parseValue($options) {
-//		NasaGallery::testApiKey(true);
+		foreach ( $options as $key => $value ) {
+			$options[ $key ] = sanitize_text_field($value);
+		}
 		return $options;
 	}
 
